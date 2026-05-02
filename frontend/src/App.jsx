@@ -13,7 +13,7 @@ function App() {
 
   return (
     <div style={{ padding: "20px", fontFamily: "Arial" }}>
-      <h1>3-Tier Azure Demo App</h1>
+      <h1>3-Tier Azure Devops Demo App</h1>
       <p>React frontend + ASP.NET Core API + Azure SQL + Key Vault</p>
 
       {error && <p>{error}</p>}

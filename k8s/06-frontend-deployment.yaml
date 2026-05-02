@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: frontend
+          image: loveluacr.azurecr.io/frontend:1.0
           imagePullPolicy: Always
           ports:
             - containerPort: 80
