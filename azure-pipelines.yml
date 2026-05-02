@@ -70,9 +70,7 @@ stages:
           npm install --prefix frontend
           npm run build --prefix frontend
         displayName: Build frontend for SonarQube
-      - script: |
-          npm install -g sonar-scanner
-        displayName: Install sonar-scanner
+
         
       - script: |
           sonar-scanner \
