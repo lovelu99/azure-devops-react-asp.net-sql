@@ -16,7 +16,8 @@ stages:
   jobs:
   - job: BuildPush
     pool:
-      vmImage: ubuntu-latest
+      #vmImage: ubuntu-latest
+      vmImage: Default
 
     steps:
     - task: Docker@2
