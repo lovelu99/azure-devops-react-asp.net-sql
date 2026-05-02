@@ -30,7 +30,8 @@ stages:
           scannerMode: 'dotnet'
           projectKey: 'three-tier-backend'
           projectName: 'three-tier-backend'
-
+          extraProperties: |
+            sonar.branch.name=
       - script: |
           dotnet restore backend/backend/backend/backend.csproj
           dotnet build backend/backend/backend/backend.csproj --configuration Release --no-restore
