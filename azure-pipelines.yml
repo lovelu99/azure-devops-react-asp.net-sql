@@ -39,30 +39,23 @@ stages:
       #     dotnet restore backend/backend/backend/backend.csproj
       #     dotnet build backend/backend/backend/backend.csproj --configuration Release --no-restore
       #   displayName: Build backend for SonarQube
-      - script: |
-        dotnet tool install --global dotnet-sonarscanner || true
-        export PATH="$PATH:$HOME/.dotnet/tools" 
+        - script: |
+          dotnet tool install --global dotnet-sonarscanner || true
+          export PATH="$PATH:$HOME/.dotnet/tools"
 
-        dotnet sonarscanner begin \
-          /k:"three-tier-backend" \
-          /n:"three-tier-backend" \
-          /d:sonar.host.url="$(SONAR_HOST_URL)" \
-          /d:sonar.token="$(SONAR_TOKEN)"
+          dotnet sonarscanner begin \
+            /k:"three-tier-backend" \
+            /n:"three-tier-backend" \
+            /d:sonar.host.url="$(SONAR_HOST_URL)" \
+            /d:sonar.token="$(SONAR_TOKEN)"
 
-        dotnet restore backend/backend/backend/backend.csproj
-        dotnet build backend/backend/backend/backend.csproj --configuration Release --no-restore
+          dotnet restore backend/backend/backend/backend.csproj
+          dotnet build backend/backend/backend/backend.csproj --configuration Release --no-restore
 
-        dotnet sonarscanner end \
-          /d:sonar.token="$(SONAR_TOKEN)"
-      displayName: SonarQube scan backend
+          dotnet sonarscanner end \
+            /d:sonar.token="$(SONAR_TOKEN)"
+        displayName: SonarQube scan backend
       
-      - task: SonarQubeAnalyze@7
-        displayName: Run SonarQube analysis
-
-      - task: SonarQubePublish@7
-        displayName: Publish SonarQube Quality Gate
-        inputs:
-          pollingTimeoutSec: '300'
 
       - task: Docker@2
         displayName: Build backend image
