@@ -17,7 +17,7 @@ spec:
       serviceAccountName: backend-sa
       containers:
         - name: backend
-          image: loveluacr.azurecr.io/backend-api:1.0
+          image: backend-api
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
