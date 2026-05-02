@@ -20,116 +20,116 @@ stages:
       name: Default
 
     steps:
-    - checkout: self
-      fetchDepth: 0
+      - checkout: self
+        fetchDepth: 0
 
-    - task: SonarQubePrepare@7
-      displayName: Prepare SonarQube analysis
-      inputs:
-        SonarQube: 'sonarqube-connection'
-        scannerMode: 'dotnet'
-        projectKey: 'three-tier-backend'
-        projectName: 'three-tier-backend'
+      - task: SonarQubePrepare@7
+        displayName: Prepare SonarQube analysis
+        inputs:
+          SonarQube: 'sonarqube-connection'
+          scannerMode: 'dotnet'
+          projectKey: 'three-tier-backend'
+          projectName: 'three-tier-backend'
 
-    - script: |
-        dotnet restore backend/backend/backend/backend.csproj
-        dotnet build backend/backend/backend/backend.csproj --configuration Release --no-restore
-      displayName: Build backend for SonarQube
+      - script: |
+          dotnet restore backend/backend/backend/backend.csproj
+          dotnet build backend/backend/backend/backend.csproj --configuration Release --no-restore
+        displayName: Build backend for SonarQube
 
-    - task: SonarQubeAnalyze@7
-      displayName: Run SonarQube analysis
+      - task: SonarQubeAnalyze@7
+        displayName: Run SonarQube analysis
 
-    - task: SonarQubePublish@7
-      displayName: Publish SonarQube Quality Gate
-      inputs:
-        pollingTimeoutSec: '300'
+      - task: SonarQubePublish@7
+        displayName: Publish SonarQube Quality Gate
+        inputs:
+          pollingTimeoutSec: '300'
 
-    - task: Docker@2
-      displayName: Build backend image
-      inputs:
-        command: build
-        repository: $(backendImage)
-        dockerfile: backend/backend/backend/Dockerfile
-        containerRegistry: acr-connection
-        tags: |
-          $(tag)
+      - task: Docker@2
+        displayName: Build backend image
+        inputs:
+          command: build
+          repository: $(backendImage)
+          dockerfile: backend/backend/backend/Dockerfile
+          containerRegistry: acr-connection
+          tags: |
+            $(tag)
 
-    - task: Docker@2
-      displayName: Build frontend image
-      inputs:
-        command: build
-        repository: $(frontendImage)
-        dockerfile: frontend/Dockerfile
-        containerRegistry: acr-connection
-        tags: |
-          $(tag)
-    # Install Trivy
-    - script: |
-         if ! command -v trivy &> /dev/null
-         then
-            sudo apt-get update
-            sudo apt-get install -y wget apt-transport-https gnupg lsb-release
-            wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo gpg --dearmor -o /usr/share/keyrings/trivy.gpg
-            echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee /etc/apt/sources.list.d/trivy.list
-            sudo apt-get update
-            sudo apt-get install -y trivy
-            else
-            echo "Trivy already installed"
-          fi
-      displayName: Install Trivy
-    #  Scan Backend
-    - script: |
-        trivy image --ignorefile .trivyignore \
-          --severity CRITICAL \
-          -f table \
-          -o backend-report.txt \
-          $(acrLoginServer)/$(backendImage):$(tag)
+      - task: Docker@2
+        displayName: Build frontend image
+        inputs:
+          command: build
+          repository: $(frontendImage)
+          dockerfile: frontend/Dockerfile
+          containerRegistry: acr-connection
+          tags: |
+            $(tag)
+      # Install Trivy
+      - script: |
+          if ! command -v trivy &> /dev/null
+          then
+              sudo apt-get update
+              sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+              wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo gpg --dearmor -o /usr/share/keyrings/trivy.gpg
+              echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee /etc/apt/sources.list.d/trivy.list
+              sudo apt-get update
+              sudo apt-get install -y trivy
+              else
+              echo "Trivy already installed"
+            fi
+        displayName: Install Trivy
+      #  Scan Backend
+      - script: |
+          trivy image --ignorefile .trivyignore \
+            --severity CRITICAL \
+            -f table \
+            -o backend-report.txt \
+            $(acrLoginServer)/$(backendImage):$(tag)
 
-        trivy image --ignorefile .trivyignore \
-        --exit-code 1 \
-        --severity CRITICAL \
-        $(acrLoginServer)/$(backendImage):$(tag)
-      displayName: Scan Backend Image
-    - publish: backend-report.txt
-      artifact: trivy-backend
-      condition: always()
-      
-    #  Scan Frontend
-    - script: |
-        trivy image --ignorefile .trivyignore \
-          --severity CRITICAL \
-          -f table \
-          -o frontend-report.txt \
-          $(acrLoginServer)/$(frontendImage):$(tag)
-
-        trivy image --ignorefile .trivyignore \
+          trivy image --ignorefile .trivyignore \
           --exit-code 1 \
           --severity CRITICAL \
-          $(acrLoginServer)/$(frontendImage):$(tag)
-      displayName: Scan Frontend Image
-    - publish: frontend-report.txt
-      artifact: trivy-frontend
-      condition: always()
+          $(acrLoginServer)/$(backendImage):$(tag)
+        displayName: Scan Backend Image
+      - publish: backend-report.txt
+        artifact: trivy-backend
+        condition: always()
+        
+      #  Scan Frontend
+      - script: |
+          trivy image --ignorefile .trivyignore \
+            --severity CRITICAL \
+            -f table \
+            -o frontend-report.txt \
+            $(acrLoginServer)/$(frontendImage):$(tag)
 
-    - task: Docker@2
-      displayName: Push backend image
-      inputs:
-        command: push
-        dockerfile: backend/backend/backend/Dockerfile
-        repository: $(backendImage)
-        containerRegistry: acr-connection
-        tags: |
-          $(tag)
+          trivy image --ignorefile .trivyignore \
+            --exit-code 1 \
+            --severity CRITICAL \
+            $(acrLoginServer)/$(frontendImage):$(tag)
+        displayName: Scan Frontend Image
+      - publish: frontend-report.txt
+        artifact: trivy-frontend
+        condition: always()
 
-    - task: Docker@2
-      displayName: Push frontend image
-      inputs:
-        command: push
-        dockerfile: frontend/Dockerfile
-        repository: $(frontendImage)
-        containerRegistry: acr-connection
-        tags: |
-          $(tag)
+      - task: Docker@2
+        displayName: Push backend image
+        inputs:
+          command: push
+          dockerfile: backend/backend/backend/Dockerfile
+          repository: $(backendImage)
+          containerRegistry: acr-connection
+          tags: |
+            $(tag)
+
+      - task: Docker@2
+        displayName: Push frontend image
+        inputs:
+          command: push
+          dockerfile: frontend/Dockerfile
+          repository: $(frontendImage)
+          containerRegistry: acr-connection
+          tags: |
+            $(tag)
 
 
 - stage: Deploy
