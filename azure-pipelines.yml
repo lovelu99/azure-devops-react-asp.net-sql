@@ -26,6 +26,7 @@ stages:
         command: build
         repository: $(backendImage)
         dockerfile: backend/backend/backend/Dockerfile
+        containerRegistry: acr-connection
         tags: |
           $(tag)
 
@@ -35,6 +36,7 @@ stages:
         command: build
         repository: $(frontendImage)
         dockerfile: frontend/Dockerfile
+        containerRegistry: acr-connection
         tags: |
           $(tag)
     # Install Trivy
