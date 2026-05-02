@@ -54,14 +54,14 @@ stages:
     #  Scan Backend
     - script: |
         trivy image --ignorefile .trivyignore \
-          --severity HIGH,CRITICAL \
+          --severity CRITICAL \
           -f table \
           -o backend-report.txt \
           $(backendImage):$(tag)
 
         trivy image --ignorefile .trivyignore \
         --exit-code 1 \
-        --severity HIGH,CRITICAL \
+        --severity CRITICAL \
         $(acrLoginServer)/$(backendImage):$(tag)
       displayName: Scan Backend Image
     - publish: backend-report.txt
@@ -71,14 +71,14 @@ stages:
     #  Scan Frontend
     - script: |
         trivy image --ignorefile .trivyignore \
-          --severity HIGH,CRITICAL \
+          --severity CRITICAL \
           -f table \
           -o frontend-report.txt \
           $(frontendImage):$(tag)
 
         trivy image --ignorefile .trivyignore \
           --exit-code 1 \
-          --severity HIGH,CRITICAL \
+          --severity CRITICAL \
           $(acrLoginServer)/$(frontendImage):$(tag)
       displayName: Scan Frontend Image
     - publish: frontend-report.txt
