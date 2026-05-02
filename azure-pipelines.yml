@@ -1,0 +1,73 @@
+trigger:
+- main
+
+variables:
+  acrLoginServer: 'loveluacr.azurecr.io'
+  backendImage: 'backend-api'
+  frontendImage: 'frontend'
+  tag: '$(Build.BuildId)'
+  namespace: 'three-tier'
+  aksResourceGroup: 'dev'
+  aksCluster: 'aks-3tier'
+
+stages:
+- stage: Build
+  displayName: Build and Push Images
+  jobs:
+  - job: BuildPush
+    pool:
+      vmImage: ubuntu-latest
+
+    steps:
+    - task: Docker@2
+      displayName: Build and push backend image
+      inputs:
+        command: buildAndPush
+        repository: $(backendImage)
+        dockerfile: backend/backend/backend/Dockerfile
+        containerRegistry: acr-connection
+        tags: |
+          $(tag)
+
+    - task: Docker@2
+      displayName: Build and push frontend image
+      inputs:
+        command: buildAndPush
+        repository: $(frontendImage)
+        dockerfile: frontend/Dockerfile
+        containerRegistry: acr-connection
+        tags: |
+          $(tag)
+
+- stage: Deploy
+  displayName: Deploy to AKS
+  dependsOn: Build
+  jobs:
+  - job: DeployAKS
+    pool:
+      vmImage: ubuntu-latest
+
+    steps:
+    - checkout: self
+
+    - task: KubernetesManifest@1
+      displayName: Deploy manifests to AKS
+      inputs:
+        action: deploy
+        connectionType: azureResourceManager
+        azureSubscriptionConnection: azure-rm-connection
+        azureResourceGroup: $(aksResourceGroup)
+        kubernetesCluster: $(aksCluster)
+        namespace: $(namespace)
+        manifests: |
+          k8s/01-namespace.yaml
+          k8s/02-backend-serviceaccount.yaml
+          k8s/03-secretproviderclass.yaml
+          k8s/04-backend-deployment.yaml
+          k8s/05-backend-service.yaml
+          k8s/06-frontend-deployment.yaml
+          k8s/07-frontend-service.yaml
+          k8s/08-ingress.yaml
+        containers: |
+          $(acrLoginServer)/$(backendImage):$(tag)
+          $(acrLoginServer)/$(frontendImage):$(tag)
