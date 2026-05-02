@@ -66,6 +66,24 @@ stages:
           fi
         displayName: Enforce Sonar Quality Gate
 
+      - script: |
+          npm install --prefix frontend
+          npm run build --prefix frontend
+        displayName: Build frontend for SonarQube
+      - script: |
+          npm install -g sonar-scanner
+        displayName: Install sonar-scanner
+        
+      - script: |
+          sonar-scanner \
+            -Dsonar.projectKey=three-tier-frontend \
+            -Dsonar.projectName=three-tier-frontend \
+            -Dsonar.sources=frontend/src \
+            -Dsonar.host.url="$(SONAR_HOST_URL)" \
+            -Dsonar.token="$(SONAR_TOKEN)"
+        displayName: SonarQube scan frontend
+
+
       - task: Docker@2
         displayName: Build backend image
         inputs:
