@@ -59,12 +59,12 @@ stages:
           --severity CRITICAL \
           -f table \
           -o backend-report.txt \
-          $(backendImage):$(tag)
+          $(acrLoginServer)/$(backendImage):$(tag)
 
         trivy image --ignorefile .trivyignore \
         --exit-code 1 \
         --severity CRITICAL \
-        $(backendImage):$(tag)
+        $(acrLoginServer)/$(backendImage):$(tag)
       displayName: Scan Backend Image
     - publish: backend-report.txt
       artifact: trivy-backend
@@ -76,12 +76,12 @@ stages:
           --severity CRITICAL \
           -f table \
           -o frontend-report.txt \
-          $(frontendImage):$(tag)
+          $(acrLoginServer)/$(frontendImage):$(tag)
 
         trivy image --ignorefile .trivyignore \
           --exit-code 1 \
           --severity CRITICAL \
-          $(frontendImage):$(tag)
+          $(acrLoginServer)/$(frontendImage):$(tag)
       displayName: Scan Frontend Image
     - publish: frontend-report.txt
       artifact: trivy-frontend
