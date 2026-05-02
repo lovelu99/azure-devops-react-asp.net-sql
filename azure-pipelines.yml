@@ -21,26 +21,23 @@ stages:
 
     steps:
     - task: Docker@2
-      displayName: Build and push backend image
+      displayName: Build backend image
       inputs:
-        command: buildAndPush
+        command: build
         repository: $(backendImage)
         dockerfile: backend/backend/backend/Dockerfile
-        containerRegistry: acr-connection
         tags: |
           $(tag)
 
     - task: Docker@2
-      displayName: Build and push frontend image
+      displayName: Build frontend image
       inputs:
-        command: buildAndPush
+        command: build
         repository: $(frontendImage)
         dockerfile: frontend/Dockerfile
-        containerRegistry: acr-connection
         tags: |
           $(tag)
     # Install Trivy
-    
     - script: |
         sudo apt-get update
         sudo apt-get install -y wget apt-transport-https gnupg lsb-release
@@ -64,6 +61,25 @@ stages:
           --severity HIGH,CRITICAL \
           $(acrLoginServer)/$(frontendImage):$(tag)
       displayName: Scan Frontend Image
+    
+    - task: Docker@2
+      displayName: Push backend image
+      inputs:
+        command: push
+        repository: $(backendImage)
+        containerRegistry: acr-connection
+        tags: |
+          $(tag)
+
+    - task: Docker@2
+      displayName: Push frontend image
+      inputs:
+        command: push
+        repository: $(frontendImage)
+        containerRegistry: acr-connection
+        tags: |
+          $(tag)
+
 
 - stage: Deploy
   displayName: Deploy to AKS
