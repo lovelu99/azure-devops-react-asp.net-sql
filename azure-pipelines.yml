@@ -30,6 +30,10 @@ stages:
           scannerMode: 'dotnet'
           projectKey: 'three-tier-backend'
           projectName: 'three-tier-backend'
+          extraProperties: |
+            sonar.scanner.skipJreProvisioning=true
+        env:
+          SONAR_BRANCH_AUTOCONFIG_DISABLED: 'true'
 
       - script: |
           dotnet restore backend/backend/backend/backend.csproj
