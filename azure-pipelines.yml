@@ -53,13 +53,13 @@ stages:
       displayName: Install Trivy
     #  Scan Backend
     - script: |
-        trivy image \
+        trivy image --ignorefile .trivyignore \
           --severity HIGH,CRITICAL \
           -f table \
           -o backend-report.txt \
           $(backendImage):$(tag)
 
-        trivy image \
+        trivy image --ignorefile .trivyignore \
         --exit-code 1 \
         --severity HIGH,CRITICAL \
         $(acrLoginServer)/$(backendImage):$(tag)
@@ -70,13 +70,13 @@ stages:
       
     #  Scan Frontend
     - script: |
-        trivy image \
+        trivy image --ignorefile .trivyignore \
           --severity HIGH,CRITICAL \
           -f table \
           -o frontend-report.txt \
           $(frontendImage):$(tag)
 
-        trivy image \
+        trivy image --ignorefile .trivyignore \
           --exit-code 1 \
           --severity HIGH,CRITICAL \
           $(acrLoginServer)/$(frontendImage):$(tag)
