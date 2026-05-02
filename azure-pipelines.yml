@@ -23,23 +23,39 @@ stages:
       - checkout: self
         fetchDepth: 0
 
-      - task: SonarQubePrepare@7
-        displayName: Prepare SonarQube analysis
-        inputs:
-          SonarQube: 'sonarqube-connection'
-          scannerMode: 'dotnet'
-          projectKey: 'three-tier-backend'
-          projectName: 'three-tier-backend'
-          extraProperties: |
-            sonar.scanner.skipJreProvisioning=true
-        env:
-          SONAR_BRANCH_AUTOCONFIG_DISABLED: 'true'
+      # - task: SonarQubePrepare@7
+      #   displayName: Prepare SonarQube analysis
+      #   inputs:
+      #     SonarQube: 'sonarqube-connection'
+      #     scannerMode: 'dotnet'
+      #     projectKey: 'three-tier-backend'
+      #     projectName: 'three-tier-backend'
+      #     extraProperties: |
+      #       sonar.scanner.skipJreProvisioning=true
+      #   env:
+      #     SONAR_BRANCH_AUTOCONFIG_DISABLED: 'true'
 
+      # - script: |
+      #     dotnet restore backend/backend/backend/backend.csproj
+      #     dotnet build backend/backend/backend/backend.csproj --configuration Release --no-restore
+      #   displayName: Build backend for SonarQube
       - script: |
-          dotnet restore backend/backend/backend/backend.csproj
-          dotnet build backend/backend/backend/backend.csproj --configuration Release --no-restore
-        displayName: Build backend for SonarQube
+        dotnet tool install --global dotnet-sonarscanner || true
+        export PATH="$PATH:$HOME/.dotnet/tools"
 
+        dotnet sonarscanner begin \
+          /k:"three-tier-backend" \
+          /n:"three-tier-backend" \
+          /d:sonar.host.url="$(SONAR_HOST_URL)" \
+          /d:sonar.token="$(SONAR_TOKEN)"
+
+        dotnet restore backend/backend/backend/backend.csproj
+        dotnet build backend/backend/backend/backend.csproj --configuration Release --no-restore
+
+        dotnet sonarscanner end \
+          /d:sonar.token="$(SONAR_TOKEN)"
+      displayName: SonarQube scan backend
+      
       - task: SonarQubeAnalyze@7
         displayName: Run SonarQube analysis
 
