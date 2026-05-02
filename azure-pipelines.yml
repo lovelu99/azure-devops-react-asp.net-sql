@@ -89,6 +89,7 @@ stages:
       displayName: Push backend image
       inputs:
         command: push
+        dockerfile: backend/backend/backend/Dockerfile
         repository: $(backendImage)
         containerRegistry: acr-connection
         tags: |
@@ -98,6 +99,7 @@ stages:
       displayName: Push frontend image
       inputs:
         command: push
+        dockerfile: frontend/Dockerfile
         repository: $(frontendImage)
         containerRegistry: acr-connection
         tags: |
