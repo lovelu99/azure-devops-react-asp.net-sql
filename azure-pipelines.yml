@@ -20,9 +20,6 @@ stages:
       name: Default
 
     steps:
-      - checkout: self
-        fetchDepth: 0
-
       # - task: SonarQubePrepare@7
       #   displayName: Prepare SonarQube analysis
       #   inputs:
@@ -54,7 +51,7 @@ stages:
 
           dotnet sonarscanner end \
             /d:sonar.token="$(SONAR_TOKEN)"
-      displayName: SonarQube scan backend
+        displayName: SonarQube scan backend
     
 
       - task: Docker@2
