@@ -39,6 +39,31 @@ stages:
         containerRegistry: acr-connection
         tags: |
           $(tag)
+    # Install Trivy
+    
+    - script: |
+        sudo apt-get update
+        sudo apt-get install -y wget apt-transport-https gnupg lsb-release
+        wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo gpg --dearmor -o /usr/share/keyrings/trivy.gpg
+        echo "deb [signed-by=/usr/share/keyrings/trivy.gpg] https://aquasecurity.github.io/trivy-repo/deb generic main" | sudo tee /etc/apt/sources.list.d/trivy.list
+        sudo apt-get update
+        sudo apt-get install -y trivy
+      displayName: Install Trivy
+    #  Scan Backend
+    - script: |
+        trivy image \
+        --exit-code 1 \
+        --severity HIGH,CRITICAL \
+        $(acrLoginServer)/$(backendImage):$(tag)
+      displayName: Scan Backend Image
+
+    #  Scan Frontend
+    - script: |
+        trivy image \
+          --exit-code 1 \
+          --severity HIGH,CRITICAL \
+          $(acrLoginServer)/$(frontendImage):$(tag)
+      displayName: Scan Frontend Image
 
 - stage: Deploy
   displayName: Deploy to AKS
