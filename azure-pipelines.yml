@@ -90,7 +90,13 @@ stages:
             exit 1
           fi
         displayName: Enforce Frontend Quality Gate
-
+      - script: |
+          trivy fs --exit-code 1 --severity HIGH,CRITICAL ./backend
+        displayName: Scan backend (SCA + secrets)
+      - script: |
+          trivy fs --exit-code 1 --severity HIGH,CRITICAL ./frontend
+        displayName: Scan frontend (SCA + secrets)
+        
       - task: Docker@2
         displayName: Build backend image
         inputs:
