@@ -4,6 +4,7 @@ metadata:
   name: backend-service
   namespace: {{ .Values.namespace }}
 spec:
+  type: {{ .Values.backend.service.type }}
   selector:
     app: backend
   ports:

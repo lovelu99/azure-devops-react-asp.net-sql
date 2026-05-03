@@ -39,6 +39,9 @@ spec:
                   name: {{ .Values.backend.secret.name }}
                   key: {{ .Values.backend.secret.sqlConnectionKey }}
 
+          resources:
+            {{- toYaml .Values.backend.resources | nindent 12 }}
+
           readinessProbe:
             httpGet:
               path: {{ .Values.backend.probes.readiness.path }}

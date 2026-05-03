@@ -4,6 +4,7 @@ metadata:
   name: frontend-service
   namespace: {{ .Values.namespace }}
 spec:
+  type: {{ .Values.frontend.service.type }}
   selector:
     app: frontend
   ports:

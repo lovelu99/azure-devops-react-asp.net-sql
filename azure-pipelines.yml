@@ -272,14 +272,14 @@ stages:
 #         kubernetesCluster: $(aksCluster)
 #         namespace: $(namespace)
 #         manifests: |
-#           k8s/01-namespace.yaml
-#           k8s/02-backend-serviceaccount.yaml
-#           k8s/03-secretproviderclass.yaml
-#           k8s/04-backend-deployment.yaml
-#           k8s/05-backend-service.yaml
-#           k8s/06-frontend-deployment.yaml
-#           k8s/07-frontend-service.yaml
-#           k8s/08-ingress.yaml
+#           k8s/namespace.yaml
+#           k8s/backend-serviceaccount.yaml
+#           k8s/secretproviderclass.yaml
+#           k8s/backend-deployment.yaml
+#           k8s/backend-service.yaml
+#           k8s/frontend-deployment.yaml
+#           k8s/frontend-service.yaml
+#           k8s/ingress.yaml
 #         containers: |
 #           $(acrLoginServer)/$(backendImage):$(tag)
 #           $(acrLoginServer)/$(frontendImage):$(tag)
