@@ -185,37 +185,64 @@ stages:
           tags: |
             $(tag)
 
-
 - stage: Deploy
-  displayName: Deploy to AKS
+  displayName: Deploy to AKS with Helm
   dependsOn: Build
   jobs:
   - job: DeployAKS
     pool:
-      #vmImage: ubuntu-latest
       name: Default
 
     steps:
     - checkout: self
 
-    - task: KubernetesManifest@1
-      displayName: Deploy manifests to AKS
-      inputs:
-        action: deploy
-        connectionType: azureResourceManager
-        azureSubscriptionConnection: azure-rm-connection
-        azureResourceGroup: $(aksResourceGroup)
-        kubernetesCluster: $(aksCluster)
-        namespace: $(namespace)
-        manifests: |
-          k8s/01-namespace.yaml
-          k8s/02-backend-serviceaccount.yaml
-          k8s/03-secretproviderclass.yaml
-          k8s/04-backend-deployment.yaml
-          k8s/05-backend-service.yaml
-          k8s/06-frontend-deployment.yaml
-          k8s/07-frontend-service.yaml
-          k8s/08-ingress.yaml
-        containers: |
-          $(acrLoginServer)/$(backendImage):$(tag)
-          $(acrLoginServer)/$(frontendImage):$(tag)
+    - script: |
+        az login --identity
+
+        az aks get-credentials \
+          --resource-group $(aksResourceGroup) \
+          --name $(aksCluster) \
+          --overwrite-existing
+
+        helm upgrade --install three-tier-app ./helm/three-tier-app \
+          -n $(namespace) \
+          --create-namespace \
+          --set backend.image.repository=$(acrLoginServer)/$(backendImage) \
+          --set backend.image.tag=$(tag) \
+          --set frontend.image.repository=$(acrLoginServer)/$(frontendImage) \
+          --set frontend.image.tag=$(tag)
+      displayName: Deploy three-tier app with Helm
+      
+# - stage: Deploy
+#   displayName: Deploy to AKS
+#   dependsOn: Build
+#   jobs:
+#   - job: DeployAKS
+#     pool:
+#       #vmImage: ubuntu-latest
+#       name: Default
+
+#     steps:
+#     - checkout: self
+
+#     - task: KubernetesManifest@1
+#       displayName: Deploy manifests to AKS
+#       inputs:
+#         action: deploy
+#         connectionType: azureResourceManager
+#         azureSubscriptionConnection: azure-rm-connection
+#         azureResourceGroup: $(aksResourceGroup)
+#         kubernetesCluster: $(aksCluster)
+#         namespace: $(namespace)
+#         manifests: |
+#           k8s/01-namespace.yaml
+#           k8s/02-backend-serviceaccount.yaml
+#           k8s/03-secretproviderclass.yaml
+#           k8s/04-backend-deployment.yaml
+#           k8s/05-backend-service.yaml
+#           k8s/06-frontend-deployment.yaml
+#           k8s/07-frontend-service.yaml
+#           k8s/08-ingress.yaml
+#         containers: |
+#           $(acrLoginServer)/$(backendImage):$(tag)
+#           $(acrLoginServer)/$(frontendImage):$(tag)
