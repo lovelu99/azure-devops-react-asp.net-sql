@@ -184,10 +184,47 @@ stages:
           containerRegistry: acr-connection
           tags: |
             $(tag)
+- stage: Helm_Validate
+  displayName: Helm Lint, Template Validation and Security Scan
+  dependsOn: Build
+  jobs:
+  - job: ValidateHelm
+    displayName: Validate Helm Chart
+    pool:
+      name: Default
+
+    steps:
+    - checkout: self
+
+    - script: |
+        helm lint helm/three-tier-app
+      displayName: Helm lint
+
+    - script: |
+        helm template three-tier-app helm/three-tier-app \
+          -n $(namespace) \
+          --set backend.image.repository=$(acrLoginServer)/$(backendImage) \
+          --set backend.image.tag=$(tag) \
+          --set frontend.image.repository=$(acrLoginServer)/$(frontendImage) \
+          --set frontend.image.tag=$(tag) \
+          > rendered-manifests.yaml
+      displayName: Render Helm templates
+
+    - script: |
+        kubectl apply --dry-run=client -f rendered-manifests.yaml
+      displayName: Validate Kubernetes YAML
+
+    - script: |
+        trivy config --exit-code 1 --severity HIGH,CRITICAL rendered-manifests.yaml
+      displayName: Security scan rendered Kubernetes manifests
+
+    - publish: rendered-manifests.yaml
+      artifact: rendered-manifests
+      displayName: Publish rendered manifests
 
 - stage: Deploy
   displayName: Deploy to AKS with Helm
-  dependsOn: Build
+  dependsOn: Helm_Validate
   jobs:
   - job: DeployAKS
     pool:
@@ -212,7 +249,7 @@ stages:
           --set frontend.image.repository=$(acrLoginServer)/$(frontendImage) \
           --set frontend.image.tag=$(tag)
       displayName: Deploy three-tier app with Helm
-      
+
 # - stage: Deploy
 #   displayName: Deploy to AKS
 #   dependsOn: Build
