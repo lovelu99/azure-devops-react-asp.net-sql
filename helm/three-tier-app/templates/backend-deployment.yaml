@@ -54,6 +54,15 @@ spec:
               readOnly: true
           {{- end }}
 
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
+
       {{- if .Values.backend.keyVault.enabled }}
       volumes:
         - name: secrets-store
