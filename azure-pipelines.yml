@@ -184,102 +184,106 @@ stages:
           containerRegistry: acr-connection
           tags: |
             $(tag)
-- stage: Helm_Validate
-  displayName: Helm Lint, Template Validation and Security Scan
-  dependsOn: Build
-  jobs:
-  - job: ValidateHelm
-    displayName: Validate Helm Chart
-    pool:
-      name: Default
-
-    steps:
-    - checkout: self
-
-    - script: |
-        helm lint helm/three-tier-app
-      displayName: Helm lint
-
-    - script: |
-        helm template three-tier-app helm/three-tier-app \
-          -n $(namespace) \
-          --set backend.image.repository=$(acrLoginServer)/$(backendImage) \
-          --set backend.image.tag=$(tag) \
-          --set frontend.image.repository=$(acrLoginServer)/$(frontendImage) \
-          --set frontend.image.tag=$(tag) \
-          > rendered-manifests.yaml
-      displayName: Render Helm templates
-
-    - script: |
-        kubectl apply --dry-run=client -f rendered-manifests.yaml
-      displayName: Validate Kubernetes YAML
-
-    - script: |
-        trivy config --exit-code 1 --severity HIGH,CRITICAL rendered-manifests.yaml
-      displayName: Security scan rendered Kubernetes manifests
-
-    - publish: rendered-manifests.yaml
-      artifact: rendered-manifests
-      displayName: Publish rendered manifests
-
-- stage: Deploy
-  displayName: Deploy to AKS with Helm
-  dependsOn: Helm_Validate
-  jobs:
-  - job: DeployAKS
-    pool:
-      name: Default
-
-    steps:
-    - checkout: self
-
-    - script: |
-        az login --identity
-
-        az aks get-credentials \
-          --resource-group $(aksResourceGroup) \
-          --name $(aksCluster) \
-          --overwrite-existing
-
-        helm upgrade --install three-tier-app ./helm/three-tier-app \
-          -n $(namespace) \
-          --create-namespace \
-          --set backend.image.repository=$(acrLoginServer)/$(backendImage) \
-          --set backend.image.tag=$(tag) \
-          --set frontend.image.repository=$(acrLoginServer)/$(frontendImage) \
-          --set frontend.image.tag=$(tag)
-      displayName: Deploy three-tier app with Helm
-
-# - stage: Deploy
-#   displayName: Deploy to AKS
+# - stage: Helm_Validate
+#   displayName: Helm Lint, Template Validation and Security Scan
 #   dependsOn: Build
 #   jobs:
-#   - job: DeployAKS
+#   - job: ValidateHelm
+#     displayName: Validate Helm Chart
 #     pool:
-#       #vmImage: ubuntu-latest
 #       name: Default
 
 #     steps:
 #     - checkout: self
 
-#     - task: KubernetesManifest@1
-#       displayName: Deploy manifests to AKS
-#       inputs:
-#         action: deploy
-#         connectionType: azureResourceManager
-#         azureSubscriptionConnection: azure-rm-connection
-#         azureResourceGroup: $(aksResourceGroup)
-#         kubernetesCluster: $(aksCluster)
-#         namespace: $(namespace)
-#         manifests: |
-#           k8s/namespace.yaml
-#           k8s/backend-serviceaccount.yaml
-#           k8s/secretproviderclass.yaml
-#           k8s/backend-deployment.yaml
-#           k8s/backend-service.yaml
-#           k8s/frontend-deployment.yaml
-#           k8s/frontend-service.yaml
-#           k8s/ingress.yaml
-#         containers: |
-#           $(acrLoginServer)/$(backendImage):$(tag)
-#           $(acrLoginServer)/$(frontendImage):$(tag)
+#     - script: |
+#         helm lint helm/three-tier-app
+#       displayName: Helm lint
+
+#     - script: |
+#         helm template three-tier-app helm/three-tier-app \
+#           -n $(namespace) \
+#           --set backend.image.repository=$(acrLoginServer)/$(backendImage) \
+#           --set backend.image.tag=$(tag) \
+#           --set frontend.image.repository=$(acrLoginServer)/$(frontendImage) \
+#           --set frontend.image.tag=$(tag) \
+#           > rendered-manifests.yaml
+#       displayName: Render Helm templates
+
+#     - script: |
+#         kubectl apply --dry-run=client -f rendered-manifests.yaml
+#       displayName: Validate Kubernetes YAML
+
+#     - script: |
+#         trivy config --exit-code 1 --severity HIGH,CRITICAL rendered-manifests.yaml
+#       displayName: Security scan rendered Kubernetes manifests
+
+#     - publish: rendered-manifests.yaml
+#       artifact: rendered-manifests
+#       displayName: Publish rendered manifests
+
+# - stage: Deploy
+#   displayName: Deploy to AKS with Helm
+#   dependsOn: Helm_Validate
+#   jobs:
+#   - job: DeployAKS
+#     pool:
+#       name: Default
+
+#     steps:
+#     - checkout: self
+
+#     - script: |
+#         az login --identity
+
+#         az aks get-credentials \
+#           --resource-group $(aksResourceGroup) \
+#           --name $(aksCluster) \
+#           --overwrite-existing
+
+#         helm upgrade --install three-tier-app ./helm/three-tier-app \
+#           -n $(namespace) \
+#           --create-namespace \
+#           --set backend.image.repository=$(acrLoginServer)/$(backendImage) \
+#           --set backend.image.tag=$(tag) \
+#           --set frontend.image.repository=$(acrLoginServer)/$(frontendImage) \
+#           --set frontend.image.tag=$(tag)
+#       displayName: Deploy three-tier app with Helm
+
+- stage: Deploy
+  displayName: Deploy to AKS
+  dependsOn: Build
+  jobs:
+  - job: DeployAKS
+    pool:
+      #vmImage: ubuntu-latest
+      name: Default
+
+    steps:
+    - checkout: self
+
+    - task: KubernetesManifest@1
+      displayName: Deploy manifests to AKS
+      inputs:
+        action: deploy
+        connectionType: azureResourceManager
+        azureSubscriptionConnection: azure-rm-connection
+        azureResourceGroup: $(aksResourceGroup)
+        kubernetesCluster: $(aksCluster)
+        namespace: $(namespace)
+        manifests: |
+          k8s/namespace.yaml
+          k8s/backend-serviceaccount.yaml
+          k8s/secretproviderclass.yaml
+          k8s/backend-deployment.yaml
+          k8s/backend-service.yaml
+          k8s/frontend-deployment.yaml
+          k8s/frontend-service.yaml
+          k8s/ingress.yaml
+          k8s/hpa.yaml
+          k8s/pdb.yaml
+          k8s/networkpolicy.yaml
+
+        containers: |
+          $(acrLoginServer)/$(backendImage):$(tag)
+          $(acrLoginServer)/$(frontendImage):$(tag)

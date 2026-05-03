@@ -13,14 +13,21 @@ spec:
       labels:
         app: backend
         azure.workload.identity/use: "true"
+
     spec:
       serviceAccountName: backend-sa
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 2000
+
       containers:
         - name: backend
-          image: loveluacr.azurecr.io/backend-api:1.0
+          image: "loveluacr.azurecr.io/backend-api:53"
           imagePullPolicy: Always
           ports:
             - containerPort: 8080
+
           env:
             - name: ASPNETCORE_URLS
               value: "http://+:8080"
@@ -29,12 +36,22 @@ spec:
                 secretKeyRef:
                   name: backend-secrets
                   key: SqlConnectionString
+
+          resources:
+            limits:
+              cpu: 500m
+              memory: 512Mi
+            requests:
+              cpu: 200m
+              memory: 256Mi
+
           readinessProbe:
             httpGet:
               path: /health
               port: 8080
             initialDelaySeconds: 10
             periodSeconds: 10
+
           livenessProbe:
             httpGet:
               path: /health
@@ -45,6 +62,15 @@ spec:
             - name: secrets-store
               mountPath: "/mnt/secrets-store"
               readOnly: true
+
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 1000
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop:
+                - ALL
       volumes:
         - name: secrets-store
           csi:

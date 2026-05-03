@@ -4,7 +4,7 @@ metadata:
   name: three-tier-ingress
   namespace: three-tier
 spec:
-  ingressClassName: webapprouting.kubernetes.azure.com
+  ingressClassName: "webapprouting.kubernetes.azure.com"
   rules:
     - http:
         paths:
