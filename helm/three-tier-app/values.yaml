@@ -1,0 +1,52 @@
+namespace: three-tier
+azure:
+  workloadIdentityClientId: "0f48880b-ce16-4970-9f2a-dfd312bc2c41"
+  keyVaultName: "kv-3tier-app-lovelu2"
+  tenantId: "2a1f0b68-fdde-4151-9edf-97628de42914"
+
+frontend:
+  replicaCount: 2
+  image:
+    repository: loveluacr.azurecr.io/frontend
+    tag: "1.0"
+    pullPolicy: Always
+  containerPort: 80
+
+backend:
+  replicaCount: 2
+  serviceAccountName: backend-sa
+  workloadIdentityEnabled: true
+  image:
+    repository: loveluacr.azurecr.io/backend-api
+    tag: "1.0"
+    pullPolicy: Always
+  containerPort: 8080
+
+  env:
+    aspnetcoreUrls: "http://+:8080"
+
+  secret:
+    name: backend-secrets
+    sqlConnectionKey: SqlConnectionString
+
+  probes:
+    readiness:
+      path: /health
+      initialDelaySeconds: 10
+      periodSeconds: 10
+    liveness:
+      path: /health
+      initialDelaySeconds: 20
+      periodSeconds: 20
+  
+  serviceAccount:
+    name: backend-sa
+    
+ 
+  keyVault:
+    enabled: true
+    mountPath: "/mnt/secrets-store"
+    secretProviderClass: backend-keyvault-secrets
+ingress:
+  enabled: true
+  host: ""
