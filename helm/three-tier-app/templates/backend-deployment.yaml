@@ -15,8 +15,14 @@ spec:
         {{- if .Values.backend.workloadIdentityEnabled }}
         azure.workload.identity/use: "true"
         {{- end }}
+
     spec:
       serviceAccountName: {{ .Values.backend.serviceAccountName }}
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 2000
+
       containers:
         - name: backend
           image: "{{ .Values.backend.image.repository }}:{{ .Values.backend.image.tag }}"
@@ -57,7 +63,6 @@ spec:
           securityContext:
             runAsNonRoot: true
             runAsUser: 1000
-            fsGroup: 2000
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
             capabilities:
