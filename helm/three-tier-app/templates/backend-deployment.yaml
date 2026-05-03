@@ -61,5 +61,5 @@ spec:
             driver: secrets-store.csi.k8s.io
             readOnly: true
             volumeAttributes:
-              secretProviderClass: {{ .Values.backend.keyVault.secretProviderClass }}
+              secretProviderClass: {{ .Values.backend.keyVault.secretProviderClassName }}
       {{- end }}
